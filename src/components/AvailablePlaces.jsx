@@ -1,48 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+
 import Places from './Places.jsx';
 import Error from './Error.jsx';
 import { sortPlacesByDistance } from '../loc.js';
-import { fetchAvailablePlaces } from "../http.js";
+import { fetchAvailablePlaces } from '../http.js';
 
 export default function AvailablePlaces({ onSelectPlace }) {
-  const [isfetching, setIsfetching] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [availablePlaces, setAvailablePlaces] = useState([]);
   const [error, setError] = useState();
 
   useEffect(() => {
     async function fetchPlaces() {
-      setIsfetching(true);
+      setIsFetching(true);
+
       try {
         const places = await fetchAvailablePlaces();
-        //   navigator.geolocation.getCurrentPosition((position) => {
-        //   const sortedPlaces = sortPlacesByDistance(resData.places, position.coords.latitude, position.coords.longitude);
-        //   setAvailablePlaces(sortedPlaces);
-        //   setIsfetching(false);
-        // })
-        setAvailablePlaces(places);
 
-
+        navigator.geolocation.getCurrentPosition((position) => {
+          const sortedPlaces = sortPlacesByDistance(
+            places,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setAvailablePlaces(sortedPlaces);
+          setIsFetching(false);
+        });
       } catch (error) {
-        setError({ message: error.messege || "Failed to get places please try again later." })
-        // setIsfetching(false);
+        setError({
+          message:
+            error.message || 'Could not fetch places, please try again later.',
+        });
+        setIsFetching(false);
       }
-      setIsfetching(false);
-
     }
 
     fetchPlaces();
   }, []);
 
   if (error) {
-    return <Error title="An Error Ocurred!" message={error.message} />
+    return <Error title="An error occurred!" message={error.message} />;
   }
 
   return (
     <Places
       title="Available Places"
       places={availablePlaces}
-      isfetching={isfetching}
-      loadingText="Fetching Places Data"
+      isLoading={isFetching}
+      loadingText="Fetching place data..."
       fallbackText="No places available."
       onSelectPlace={onSelectPlace}
     />
